@@ -2,7 +2,7 @@
 
 if [ $1 == "help" ]
 then
-    echo "... name description ticker url icon amount"
+    echo "... name description ticker url icon amount addr-file"
 	exit
 fi
 
@@ -12,17 +12,21 @@ export TICKER=$3
 export URL=$4
 export ICON=$5
 export AMT=$6
+export PAYFILE=$7
 
 export CARDANO_NODE_SOCKET_PATH=socket
-cardano-node run --topology config/topology.json --database-path db --config config/config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH"
+cardano-node run --topology config/testnet-topology.json --database-path db --config config/testnet-config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH" & jobs
 
 export NETWORK_ID="--testnet-magic 764824073"
 
-echo "Building payment keys..."
-cardano-cli address key-gen --verification-key-file pay.vkey --signing-key-file pay.skey
-
-echo "Building payment address..."
-cardano-cli address build $NETWORK_ID --payment-verification-key-file pay.vkey --out-file pay.addr
+if [ $PAYFILE == "" ]
+then
+	echo "Building payment keys..."
+	cardano-cli address key-gen --verification-key-file pay.vkey --signing-key-file pay.skey
+	
+	echo "Building payment address..."
+	cardano-cli address build $NETWORK_ID --payment-verification-key-file pay.vkey --out-file pay.addr
+fi
 
 export PAYMENT_ADDR=$(cat pay.addr)
 echo "Payment address is: $PAYMENT_ADDR"
@@ -90,29 +94,6 @@ cat mint.signed
 echo "Submiting minting transaction..."
 cardano-cli transaction submit $NETWORK_ID --tx-file mint.signed
 
-echo "Awaiting mint..."
+echo "Awaiting token..."
 sleep 60
 cardano-cli query utxo $NETWORK_ID --address $PAYMENT_ADDR
-
-export ASSET_ENC=$(echo $ASSET_NAME | basenc --base16 | awk '{print tolower($0)}')
-
-export SUBJECT="$POLICY_ID$ASSET_ENC"
-
-echo "Subject is: '$SUBJECT'"
-
-token-metadata-creator entry --init $SUBJECT
-
-token-metadata-creator entry $SUBJECT --name "$ASSET_NAME" --description "$DESCRIPTION" --policy policy.json --ticker "$TICKER" --url "$URL" --logo "$ICON"
-
-token-metadata-creator entry $SUBJECT -a policy/policy.skey
-
-token-metadata-creator entry $SUBJECT --finalize
-
-cd cardano-token-registry
-
-git checkout -b $SUBJECT-metadata
-
-cp ../$SUBJECT.json ./mappings/
-git add mappings/$SUBJECT.json
-git commit -m "Add $SUBJECT metadata"
-git push -u origin $SUBJECT-metadata
