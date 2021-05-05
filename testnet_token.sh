@@ -15,7 +15,7 @@ export AMT=$6
 export PAYFILE=$7
 
 export CARDANO_NODE_SOCKET_PATH=socket
-cardano-node run --topology config/testnet-topology.json --database-path db --config config/testnet-config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH" & jobs
+cardano-node run --topology config/testnet-topology.json --database-path db --config config/testnet-config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH" & jobs >& /dev/null
 
 export NETWORK_ID="--testnet-magic 764824073"
 
@@ -31,14 +31,12 @@ fi
 export PAYMENT_ADDR=$(cat pay.addr)
 echo "Payment address is: $PAYMENT_ADDR"
 
-echo "Did you load this Address? (for testnet visit https://developers.cardano.org/en/testnets/cardano/tools/faucet/)"
-select yn in "Yes" "No"; do
-    case $yn in
-        Yes ) break;;
-        No ) break;;
-    esac
-done
-
+read -p "Did you load this Address? (for testnet visit https://developers.cardano.org/en/testnets/cardano/tools/faucet/) [y/n]" -n 1 -r
+if [[ $REPLY =~ ^[Nn]$ ]]
+then
+	echo "Then load up the address and return with the addr-file as last argument"
+	exit
+fi
 echo "UTxOs available:"
 cardano-cli query utxo $NETWORK_ID --address $PAYMENT_ADDR
 
