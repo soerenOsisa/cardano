@@ -15,7 +15,7 @@ export AMT=$6
 export PAYFILE=$7
 
 export CARDANO_NODE_SOCKET_PATH=socket
-cardano-node run --topology config/testnet-topology.json --database-path db --config config/testnet-config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH" & jobs >& /dev/null
+cardano-node run --topology config/testnet-topology.json --database-path db --config config/testnet-config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH" > /dev/null 2>&1 &
 
 export NETWORK_ID="--testnet-magic 764824073"
 
