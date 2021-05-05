@@ -13,11 +13,8 @@ export URL=$4
 export ICON=$5
 export AMT=$6
 
-cd cardano
-
 export CARDANO_NODE_SOCKET_PATH=socket
- 
-cardano-node run --topology configuration/cardano/mainnet-topology.json --database-path db --config configuration/cardano/mainnet-config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH"
+cardano-node run --topology config/topology.json --database-path db --config config/config.json --port 3001 --socket-path "$CARDANO_NODE_SOCKET_PATH"
 
 export NETWORK_ID="--testnet-magic 764824073"
 
